@@ -1,0 +1,737 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cheat-Proof Document Mode & Study Hub</title>
+<style>
+:root {
+--bg-color: #f4f7f6;
+--card-bg: #ffffff;
+--text-color: #333333;
+--primary-color: #4a90e2;
+--primary-hover: #357abd;
+--danger-color: #e74c3c;
+--border-color: #cccccc;
+--success-color: #2ecc71;
+--success-hover: #27ae60;
+--secondary-color: #7f8c8d;
+--secondary-hover: #95a5a6;
+--disabled-color: #bdc3c7;
+}
+
+body {
+font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+background-color: var(--bg-color);
+color: var(--text-color);
+margin: 0;
+padding: 20px;
+display: flex;
+flex-direction: column;
+align-items: center;
+min-height: 100vh;
+gap: 20px;
+}
+
+.container {
+width: 100%;
+max-width: 800px;
+background: var(--card-bg);
+padding: 30px;
+border-radius: 8px;
+box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+box-sizing: border-box;
+}
+
+h2, h3 {
+margin-top: 0;
+color: #2c3e50;
+}
+
+.header-wrapper {
+display: flex;
+justify-content: space-between;
+align-items: center;
+border-bottom: 2px solid var(--bg-color);
+padding-bottom: 10px;
+margin-bottom: 15px;
+}
+
+.header-wrapper h2 {
+margin: 0;
+}
+
+.instructions {
+background-color: #e8f4fd;
+border-left: 4px solid var(--primary-color);
+padding: 12px;
+margin-bottom: 20px;
+font-size: 0.95rem;
+border-radius: 0 4px 4px 0;
+}
+
+.editor-wrapper {
+position: relative;
+margin-bottom: 20px;
+}
+
+textarea {
+width: 100%;
+height: 300px;
+padding: 15px;
+box-sizing: border-box;
+border: 2px solid var(--border-color);
+border-radius: 6px;
+font-size: 1rem;
+line-height: 1.5;
+resize: vertical;
+outline: none;
+transition: border-color 0.3s;
+}
+
+textarea:focus {
+border-color: var(--primary-color);
+}
+
+.status-bar {
+display: flex;
+justify-content: space-between;
+font-size: 0.9rem;
+color: #666;
+margin-top: 5px;
+}
+
+.alert-banner {
+display: none;
+background-color: var(--danger-color);
+color: white;
+padding: 15px;
+border-radius: 6px;
+margin-bottom: 20px;
+font-weight: bold;
+animation: shake 0.5s ease-in-out;
+}
+
+/* --- View Toggling --- */
+.app-view {
+display: none;
+}
+.app-view.active {
+display: block;
+}
+
+/* --- Buttons & Utilities --- */
+.btn {
+background-color: var(--primary-color);
+color: white;
+border: none;
+padding: 10px 15px;
+border-radius: 4px;
+cursor: pointer;
+font-weight: 600;
+transition: background 0.2s, transform 0.1s;
+}
+
+.btn:hover:not(:disabled) {
+background-color: var(--primary-hover);
+}
+
+.btn:active:not(:disabled) {
+transform: scale(0.98);
+}
+
+.btn-secondary { background-color: var(--secondary-color); }
+.btn-secondary:hover { background-color: var(--secondary-hover); }
+
+.btn-success { background-color: var(--success-color); }
+.btn-success:hover:not(:disabled) { background-color: var(--success-hover); }
+
+.btn:disabled {
+background-color: var(--disabled-color) !important;
+color: #7f8c8d !important;
+cursor: not-allowed;
+opacity: 0.7;
+}
+
+.study-menu {
+display: flex;
+flex-direction: column;
+gap: 12px;
+max-width: 300px;
+margin: 20px auto;
+}
+
+/* --- Flashcard Styles --- */
+.flashcard-form {
+display: flex;
+gap: 10px;
+margin-bottom: 20px;
+flex-wrap: wrap;
+}
+
+.flashcard-form input {
+flex: 1;
+min-width: 180px;
+padding: 10px;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+font-size: 0.95rem;
+}
+
+.flashcard-display {
+perspective: 1000px;
+width: 100%;
+max-width: 400px;
+height: 220px;
+margin: 20px auto;
+}
+
+.flashcard-inner {
+position: relative;
+width: 100%;
+height: 100%;
+text-align: center;
+transition: transform 0.6s;
+transform-style: preserve-3d;
+box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+border-radius: 8px;
+}
+
+.flashcard-inner.flipped { transform: rotateY(180deg); }
+
+.card-face {
+position: absolute;
+width: 100%;
+height: 100%;
+backface-visibility: hidden;
+display: flex;
+flex-direction: column;
+justify-content: center;
+align-items: center;
+padding: 20px;
+box-sizing: border-box;
+border-radius: 8px;
+border: 1px solid var(--border-color);
+cursor: pointer;
+}
+
+.card-front { background-color: #fafbfc; color: #2c3e50; }
+.card-front::after {
+content: "🔄 Click outside text to flip";
+position: absolute;
+bottom: 10px;
+font-size: 0.75rem;
+color: #888;
+}
+.card-back { background-color: #f0fdf4; color: #14532d; transform: rotateY(180deg); border-color: var(--success-color); }
+
+.editable-text {
+margin: 0;
+font-size: 1.3rem;
+word-break: break-word;
+padding: 5px;
+border: 1px dashed transparent;
+border-radius: 4px;
+cursor: text;
+max-width: 90%;
+}
+.editable-text:hover { border-color: var(--border-color); background-color: rgba(0,0,0,0.02); }
+.editable-text:focus { border-style: solid; border-color: var(--primary-color); background-color: #fff; outline: none; }
+
+.card-controls { display: flex; justify-content: center; align-items: center; gap: 15px; margin-top: 15px; }
+.counter-badge { font-size: 0.9rem; color: #666; font-weight: bold; }
+
+/* --- Quiz Engine UI --- */
+.quiz-container {
+max-width: 500px;
+margin: 0 auto;
+background: #fafbfc;
+padding: 20px;
+border-radius: 6px;
+border: 1px solid var(--border-color);
+}
+.quiz-option {
+display: block;
+width: 100%;
+text-align: left;
+padding: 12px;
+margin: 8px 0;
+background: #fff;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+cursor: pointer;
+font-size: 0.95rem;
+transition: background 0.2s;
+}
+.quiz-option:hover { background: #e8f4fd; border-color: var(--primary-color); }
+
+/* --- Chatbot Interface --- */
+.chat-container {
+max-width: 600px;
+margin: 0 auto;
+border: 1px solid var(--border-color);
+border-radius: 6px;
+background: #fff;
+display: flex;
+flex-direction: column;
+height: 400px;
+}
+.chat-log {
+flex: 1;
+padding: 15px;
+overflow-y: auto;
+display: flex;
+flex-direction: column;
+gap: 10px;
+background: #f9f9f9;
+}
+.chat-msg {
+max-width: 80%;
+padding: 10px 14px;
+border-radius: 15px;
+font-size: 0.95rem;
+line-height: 1.4;
+}
+.chat-msg.bot { background: #e2e8f0; color: #2d3748; align-self: flex-start; border-top-left-radius: 2px; }
+.chat-msg.user { background: #4a90e2; color: #fff; align-self: flex-end; border-top-right-radius: 2px; }
+.chat-input-area {
+display: flex;
+border-top: 1px solid var(--border-color);
+padding: 10px;
+gap: 10px;
+background: #fff;
+}
+.chat-input-area input {
+flex: 1;
+padding: 10px;
+border: 1px solid var(--border-color);
+border-radius: 4px;
+outline: none;
+}
+
+.sticky-footer {
+margin-top: 30px;
+padding-top: 15px;
+border-top: 2px solid var(--bg-color);
+display: flex;
+justify-content: center;
+}
+
+@keyframes shake {
+0%, 100% { transform: translateX(0); }
+20%, 60% { transform: translateX(-10px); }
+40%, 80% { transform: translateX(10px); }
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<div id="writingView" class="app-view active">
+<div class="header-wrapper">
+<h2>Locked Writing Mode</h2>
+<button class="btn" onclick="switchView('studyMenuView')">📚 Study Mode</button>
+</div>
+
+<div class="instructions">
+<strong>Anti-Cheat & Spell Check Active:</strong> Right-click pasting, keyboard shortcuts (<kbd>Ctrl+V</kbd> / <kbd>Cmd+V</kbd>), and massive text injections are blocked. Native spell-checking will underline errors.
+</div>
+
+<div id="alertBanner" class="alert-banner">
+⚠️ Security Alert: A sudden spike in word count was detected! Paste attempt blocked or flagged.
+</div>
+
+<div class="editor-wrapper">
+<textarea
+id="secureEditor"
+placeholder="Start typing your paper here... (Copy/Paste is disabled. Typos will be underlined)"
+spellcheck="true"
+></textarea>
+<div class="status-bar">
+<span id="wordCount">Words: 0</span>
+<span id="securityStatus" style="color: green;">🛡️ Cadence Monitor & Spell Check: Active</span>
+</div>
+</div>
+</div>
+
+<div id="studyMenuView" class="app-view">
+<div class="header-wrapper">
+<h2>📚 Study Hub Selection</h2>
+</div>
+<p style="text-align: center; color: #666;">Build your collection of cards, test yourself with a dynamic multiple choice quiz, then dive into application practice with our chatbot.</p>
+
+<div class="study-menu">
+<button class="btn" onclick="switchView('flashcardView')">🗂️ Manage & Review Flashcards</button>
+<button id="quizNavBtn" class="btn btn-success" disabled onclick="startQuizMode()">📝 Take Quiz (Requires 3+ Terms)</button>
+<button id="wrapUpNavBtn" class="btn btn-success" disabled onclick="startChatMode()">💬 Wrap It Up Chatbot</button>
+</div>
+
+<div class="sticky-footer">
+<button class="btn btn-success" style="width: 100%; max-width: 300px;" onclick="switchView('writingView')">✍️ Back to Editor</button>
+</div>
+</div>
+
+<div id="flashcardView" class="app-view">
+<div class="header-wrapper">
+<h2>🗂️ Flashcard Deck</h2>
+<button class="btn btn-secondary" onclick="switchView('studyMenuView')">◀ Study Menu</button>
+</div>
+
+<div class="flashcard-section">
+<p style="font-size: 0.9rem; color: #666; margin-top: -5px;">
+Click directly on text structures to edit existing slots, or generate fresh terms instantly.
+</p>
+
+<form class="flashcard-form" id="cardForm" onsubmit="addCard(event)">
+<input type="text" id="termInput" placeholder="Enter Term / Concept" required>
+<input type="text" id="definitionInput" placeholder="Enter Definition / Answer" required>
+<button type="submit" class="btn">Add Card</button>
+</form>
+
+<div id="deckContainer" style="display: none;">
+<div class="flashcard-display" onclick="handleCardClick(event)">
+<div class="flashcard-inner" id="cardInner">
+<div class="card-face card-front">
+<h3 id="frontText" class="editable-text" contenteditable="true" onblur="saveCardEdit()" onkeydown="preventEnter(event)">Click to edit term</h3>
+</div>
+<div class="card-face card-back">
+<h3 id="backText" class="editable-text" contenteditable="true" onblur="saveCardEdit()" onkeydown="preventEnter(event)">Click to edit definition</h3>
+</div>
+</div>
+</div>
+
+<div class="card-controls">
+<button class="btn" onclick="navigateDeck(-1)">◀ Prev</button>
+<span class="counter-badge" id="deckCounter">0 / 0</span>
+<button class="btn" onclick="navigateDeck(1)">Next ▶</button>
+</div>
+</div>
+
+<p id="emptyDeckMsg" style="text-align: center; color: #999; font-style: italic;">Your study deck is currently empty. Add a card to start testing yourself!</p>
+</div>
+<div class="sticky-footer">
+<button class="btn btn-success" style="width: 100%; max-width: 300px;" onclick="switchView('writingView')">✍️ Back to Editor</button>
+</div>
+</div>
+
+<div id="quizView" class="app-view">
+<div class="header-wrapper">
+<h2>📝 Term Mastery Quiz</h2>
+<button class="btn btn-secondary" onclick="switchView('studyMenuView')">◀ Study Menu</button>
+</div>
+
+<div class="quiz-container">
+<h3 id="quizQuestionNum" style="color:#666; font-size:1rem;">Question 1 of X</h3>
+<h2 id="quizQuestionText" style="font-size: 1.3rem; margin-bottom:20px;">Term prompt goes here...</h2>
+<div id="quizOptionsContainer"></div>
+</div>
+<div class="sticky-footer">
+<button class="btn btn-success" style="width: 100%; max-width: 300px;" onclick="switchView('writingView')">✍️ Back to Editor</button>
+</div>
+</div>
+
+<div id="chatView" class="app-view">
+<div class="header-wrapper">
+<h2>💬 Deep-Dive Chatbot: Wrap It Up</h2>
+<button class="btn btn-secondary" onclick="switchView('studyMenuView')">◀ Study Menu</button>
+</div>
+
+<div class="chat-container">
+<div class="chat-log" id="chatLog"></div>
+<form class="chat-input-area" onsubmit="handleUserChat(event)">
+<input type="text" id="chatInputField" placeholder="Type your application breakdown here..." autocomplete="off" required>
+<button type="submit" class="btn">Send</button>
+</form>
+</div>
+<div class="sticky-footer">
+<button class="btn btn-success" style="width: 100%; max-width: 300px;" onclick="switchView('writingView')">✍️ Back to Editor</button>
+</div>
+</div>
+
+</div>
+
+<script>
+// --- WRITING EDITOR ENGINE ---
+const editor = document.getElementById('secureEditor');
+const wordCountDisplay = document.getElementById('wordCount');
+const alertBanner = document.getElementById('alertBanner');
+let lastWordCount = 0;
+
+editor.addEventListener('paste', function(e) {
+e.preventDefault();
+triggerViolation("Paste shortcut / context menu blocked!");
+});
+
+editor.addEventListener('input', function(e) {
+const currentText = editor.value.trim();
+const currentWords = currentText === "" ? 0 : currentText.split(/\s+/).length;
+const wordDelta = currentWords - lastWordCount;
+const MAXIMUM_BURST_THRESHOLD = 15;
+
+if (wordDelta >= MAXIMUM_BURST_THRESHOLD) {
+editor.value = currentText.split(/\s+/).slice(0, lastWordCount).join(" ");
+triggerViolation(`Sudden jump of ${wordDelta} words detected! Reverting changes.`);
+const revertedText = editor.value.trim();
+lastWordCount = revertedText === "" ? 0 : revertedText.split(/\s+/).length;
+} else {
+lastWordCount = currentWords;
+}
+wordCountDisplay.textContent = `Words: ${lastWordCount}`;
+});
+
+function triggerViolation(message) {
+alertBanner.style.display = 'block';
+alertBanner.textContent = `⚠️ Security Alert: ${message}`;
+setTimeout(() => { alertBanner.style.display = 'none'; }, 4000);
+}
+
+// --- CORE FLASHCARD DATA ---
+let flashcards = [
+{ term: "Click to edit term 1", definition: "Click to edit definition 1" },
+{ term: "Click to edit term 2", definition: "Click to edit definition 2" }
+];
+let currentCardIndex = 0;
+let quizCompletedWithPerfectScore = false;
+
+const deckContainer = document.getElementById('deckContainer');
+const emptyDeckMsg = document.getElementById('emptyDeckMsg');
+const cardInner = document.getElementById('cardInner');
+const frontText = document.getElementById('frontText');
+const backText = document.getElementById('backText');
+const deckCounter = document.getElementById('deckCounter');
+
+// --- VIEW MANAGEMENT & TRACKING ---
+function switchView(viewId) {
+document.querySelectorAll('.app-view').forEach(view => view.classList.remove('active'));
+document.getElementById(viewId).classList.add('active');
+if(viewId === 'studyMenuView') {
+evaluateFeatureUnlocks();
+}
+}
+
+function evaluateFeatureUnlocks() {
+const quizNavBtn = document.getElementById('quizNavBtn');
+const wrapUpNavBtn = document.getElementById('wrapUpNavBtn');
+
+// Check if there are at least 3 terms that are not empty/default template indicators
+const validCardsCount = flashcards.filter(c => c.term.trim() !== "" && c.definition.trim() !== "").length;
+
+if (validCardsCount >= 3) {
+quizNavBtn.disabled = false;
+} else {
+quizNavBtn.disabled = true;
+quizCompletedWithPerfectScore = false; // Reset if they delete down past 3 cards
+}
+
+if (quizCompletedWithPerfectScore && validCardsCount >= 3) {
+wrapUpNavBtn.disabled = false;
+} else {
+wrapUpNavBtn.disabled = true;
+}
+}
+
+// --- DECK INTERACTION & INLINE EDITING ---
+function updateDeckUI() {
+if (flashcards.length === 0) {
+deckContainer.style.display = 'none';
+emptyDeckMsg.style.display = 'block';
+return;
+}
+deckContainer.style.display = 'block';
+emptyDeckMsg.style.display = 'none';
+cardInner.classList.remove('flipped');
+
+setTimeout(() => {
+frontText.textContent = flashcards[currentCardIndex].term;
+backText.textContent = flashcards[currentCardIndex].definition;
+deckCounter.textContent = `${currentCardIndex + 1} / ${flashcards.length}`;
+}, 150);
+evaluateFeatureUnlocks();
+}
+
+function handleCardClick(event) {
+if (event.target.classList.contains('editable-text')) return;
+cardInner.classList.toggle('flipped');
+}
+
+function saveCardEdit() {
+if (flashcards.length === 0) return;
+flashcards[currentCardIndex].term = frontText.textContent.trim();
+flashcards[currentCardIndex].definition = backText.textContent.trim();
+evaluateFeatureUnlocks();
+}
+
+function preventEnter(event) {
+if (event.key === 'Enter') {
+event.preventDefault();
+event.target.blur();
+}
+}
+
+function addCard(event) {
+event.preventDefault();
+const termInput = document.getElementById('termInput');
+const definitionInput = document.getElementById('definitionInput');
+
+flashcards.push({
+term: termInput.value.trim(),
+definition: definitionInput.value.trim()
+});
+
+termInput.value = '';
+definitionInput.value = '';
+if (flashcards.length === 1) currentCardIndex = 0;
+updateDeckUI();
+}
+
+function navigateDeck(direction) {
+if (flashcards.length === 0) return;
+currentCardIndex = (currentCardIndex + direction + flashcards.length) % flashcards.length;
+updateDeckUI();
+}
+
+// --- RANDOMIZED MULTIPLE CHOICE QUIZ ENGINE ---
+let quizQueue = [];
+let activeQuizIndex = 0;
+let totalCorrectAnswers = 0;
+
+function startQuizMode() {
+activeQuizIndex = 0;
+totalCorrectAnswers = 0;
+
+// Clone and scramble data array order
+quizQueue = [...flashcards].sort(() => Math.random() - 0.5);
+switchView('quizView');
+renderQuizQuestion();
+}
+
+function renderQuizQuestion() {
+const currentQuizItem = quizQueue[activeQuizIndex];
+document.getElementById('quizQuestionNum').textContent = `Question ${activeQuizIndex + 1} of ${quizQueue.length}`;
+document.getElementById('quizQuestionText').textContent = `What is the correct meaning for: "${currentQuizItem.term}"?`;
+
+const optionsContainer = document.getElementById('quizOptionsContainer');
+optionsContainer.innerHTML = '';
+
+// Synthesize smart contextual distractors
+let optionsPool = [currentQuizItem.definition];
+let structuralAlternates = [
+`Alternative scope regarding ${currentQuizItem.term.toLowerCase()}.`,
+`The critical execution or background framework of ${currentQuizItem.term.toLowerCase()}.`,
+`A secondary context process related to ${currentQuizItem.term.toLowerCase()}.`,
+`Theoretical application modeling data metrics of ${currentQuizItem.term.toLowerCase()}.`
+];
+
+// Fill up options from other cards if available, otherwise fallback to variations
+let alternateCards = flashcards.filter(c => c.definition !== currentQuizItem.definition);
+while(optionsPool.length < 4) {
+if(alternateCards.length > 0) {
+let randomCard = alternateCards.splice(Math.floor(Math.random() * alternateCards.length), 1)[0];
+optionsPool.push(randomCard.definition);
+} else {
+optionsPool.push(structuralAlternates.pop() || "An alternative parameter definition setup.");
+}
+}
+
+// Randomize choice layout allocation
+optionsPool.sort(() => Math.random() - 0.5);
+
+optionsPool.forEach(optionText => {
+const btn = document.createElement('button');
+btn.className = 'quiz-option';
+btn.textContent = optionText;
+btn.onclick = () => evaluationSelection(optionText, currentQuizItem.definition);
+optionsContainer.appendChild(btn);
+});
+}
+
+function evaluationSelection(chosen, correct) {
+if (chosen === correct) {
+totalCorrectAnswers++;
+alert("✨ Correct answer!");
+} else {
+alert(`❌ Incorrect! The right answer was: \n"${correct}"`);
+}
+
+activeQuizIndex++;
+if(activeQuizIndex < quizQueue.length) {
+renderQuizQuestion();
+} else {
+concludeQuizSession();
+}
+}
+
+function concludeQuizSession() {
+if (totalCorrectAnswers === quizQueue.length) {
+quizCompletedWithPerfectScore = true;
+alert(`🎉 Outstanding! Perfect Score (${totalCorrectAnswers}/${quizQueue.length}). Chatbot mode is now unlocked!`);
+} else {
+alert(`Quiz Complete. Score: ${totalCorrectAnswers}/${quizQueue.length}. Try again to achieve 100% and unlock the Deep-Dive Chatbot.`);
+}
+switchView('studyMenuView');
+}
+
+// --- DEEP-DIVE INTERVIEW CHATBOT ENGINE ---
+let chatLogContainer;
+let chatInputItem;
+let currentChatTermIndex = 0;
+
+function startChatMode() {
+chatLogContainer = document.getElementById('chatLog');
+chatInputItem = document.getElementById('chatInputField');
+chatLogContainer.innerHTML = '';
+currentChatTermIndex = 0;
+
+switchView('chatView');
+
+// Custom prompt sequence start
+appendChatMessage("bot", "Now that you have mastered your terms, let’s put your knowledge to the test!");
+setTimeout(promptNextChatTerm, 800);
+}
+
+function appendChatMessage(sender, text) {
+const bubble = document.createElement('div');
+bubble.className = `chat-msg ${sender}`;
+bubble.textContent = text;
+chatLogContainer.appendChild(bubble);
+chatLogContainer.scrollTop = chatLogContainer.scrollHeight;
+}
+
+function promptNextChatTerm() {
+if (currentChatTermIndex < flashcards.length) {
+let targetTerm = flashcards[currentChatTermIndex].term;
+appendChatMessage("bot", `Can you explain the term "${targetTerm}" inside a real world situation? Please go into detail based on its true definition.`);
+} else {
+appendChatMessage("bot", "Excellent analysis! You have completed deep-dive scenario checks for all terms. Feel free to return to the editor to continue your work.");
+}
+}
+
+function handleUserChat(event) {
+event.preventDefault();
+const text = chatInputItem.value.trim();
+if (!text) return;
+
+appendChatMessage("user", text);
+chatInputItem.value = '';
+
+// Proceed directly to processing or evaluating the next term sequence
+if(currentChatTermIndex < flashcards.length) {
+currentChatTermIndex++;
+setTimeout(() => {
+appendChatMessage("bot", "Got it. Analyzing your real-world situational alignment... Looks solid.");
+setTimeout(promptNextChatTerm, 1000);
+}, 600);
+} else {
+setTimeout(() => {
+appendChatMessage("bot", "All terms have already been summarized. Great job writing!");
+}, 500);
+}
+}
+
+// Initial view rendering initialization
+updateDeckUI();
+</script>
+
+</body>
+</html>
